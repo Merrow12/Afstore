@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ORGANIZER
+  ADMIN
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(STUDENT)
+  faculty      String?
+  course       Int?
+  createdAt    DateTime @default(now())
+
+  events        Event[]
+  registrations Registration[]
+  reviews       Review[]
+  notifications Notification[]
+}
+
+model Event {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  dateTime    DateTime
+  location    String
+  organizerId String
+  categoryId  String
+  status      EventStatus @default(DRAFT)
+  imageUrl    String?
+  createdAt   DateTime    @default(now())
+
+  organizer     User           @relation(fields: [organizerId], references: [id])
+  category      Category       @relation(fields: [categoryId], references: [id])
+  registrations Registration[]
+  reviews       Review[]
+
+  @@index([dateTime])
+  @@index([categoryId])
+}
+
+model Category {
+  id       String  @id @default(uuid())
+  name     String
+  slug     String  @unique
+  parentId String?
+  events   Event[]
+}
+
+model Registration {
+  id           String   @id @default(uuid())
+  userId       String
+  eventId      String
+  registeredAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

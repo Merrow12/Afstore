@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: afstore_db
+    environment:
+      POSTGRES_DB: afstore
+      POSTGRES_USER: afstore_user
+      POSTGRES_PASSWORD: afstore_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: afstore_backend
+    env_file: ./backend/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend
+    container_name: afstore_frontend
+    ports:
+      - "5173:80"
+
+  nginx:
+    image: nginx:alpine
+    container_name: afstore_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  pgdata:
