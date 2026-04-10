@@ -1,18 +1,28 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { EventsService } from './events.service';
+
+jest.mock('@prisma/client', () => {
+  return {
+    PrismaClient: jest.fn().mockImplementation(() => ({
+      event: {
+        findMany: jest.fn().mockResolvedValue([]),
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: '1' }),
+        update: jest.fn().mockResolvedValue({ id: '1' }),
+        delete: jest.fn().mockResolvedValue({}),
+        count: jest.fn().mockResolvedValue(0),
+      },
+    })),
+  };
+});
 
 describe('EventsService', () => {
   let service: EventsService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [EventsService],
-    }).compile();
-
-    service = module.get<EventsService>(EventsService);
+  beforeEach(() => {
+    service = new EventsService();
   });
 
-  it('should be defined', () => {
+  it('должен быть определён', () => {
     expect(service).toBeDefined();
   });
 });

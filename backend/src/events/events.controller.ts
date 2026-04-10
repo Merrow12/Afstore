@@ -9,10 +9,21 @@ export class EventsController {
   findAll(
     @Query('category') category?: string,
     @Query('faculty') faculty?: string,
+    @Query('search') search?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.eventsService.findAll(category, faculty, Number(page) || 1, Number(limit) || 50);
+    return this.eventsService.findAll(
+      category,
+      faculty,
+      search,
+      dateFrom,
+      dateTo,
+      Number(page) || 1,
+      Number(limit) || 50,
+    );
   }
 
   @Get(':id')
