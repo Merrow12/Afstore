@@ -54,6 +54,9 @@ model Event {
 
   @@index([dateTime])
   @@index([categoryId])
+  @@index([status])
+  @@index([organizerId])
+  @@index([status, dateTime])
 }
 
 model Category {

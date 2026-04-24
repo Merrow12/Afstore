@@ -6,15 +6,11 @@ const prisma = new PrismaClient();
 @Injectable()
 export class EventsService {
 
-  async findAll(
-    category?: string,
-    faculty?: string,
-    search?: string,
-    dateFrom?: string,
-    dateTo?: string,
-    page = 1,
-    limit = 50,
-  ) {
+  async findAll(category?: string, faculty?: string, search?: string, dateFrom?: string, dateTo?: string, page = 1, limit = 50) {
+    // Валидация параметров
+    page = Math.max(1, Math.abs(Math.floor(page)));
+    limit = Math.min(100, Math.max(1, Math.abs(Math.floor(limit))));
+
     const where: any = { status: 'PUBLISHED' };
 
     if (category) where.categoryId = category;
@@ -22,7 +18,7 @@ export class EventsService {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-      ];
+    ];
     }
     if (dateFrom || dateTo) {
       where.dateTime = {};

@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState } from 'react';
 import api from '../../api/client';
 
@@ -15,9 +16,13 @@ export default function RegisterForm() {
     try {
       const res = await api.post('/auth/register', form);
       localStorage.setItem('token', res.data.accessToken);
-      window.location.href = '/events';
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      localStorage.setItem('userId', res.data.user.id);
+      toast.success('Аккаунт создан! Добро пожаловать 🎉');
+      setTimeout(() => window.location.href = '/events', 1000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка регистрации');
+      toast.error('Ошибка при регистрации');
     } finally {
       setLoading(false);
     }

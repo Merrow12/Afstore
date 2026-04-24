@@ -4,9 +4,12 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
 import { NotifyModule } from './notify/notify.module';
+import { AdminModule } from './admin/admin.module';
+import { FeedbackModule } from './feedback/feedback.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 
 @Module({
-  imports: [AuthModule, EventsModule, NotifyModule],
+  imports: [AuthModule, EventsModule, NotifyModule, AdminModule, FeedbackModule, RecommendationsModule],
   controllers: [AppController],
   providers: [AppService],
 })
