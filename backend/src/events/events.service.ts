@@ -20,7 +20,16 @@ export class EventsService {
     page = Math.max(1, Math.abs(Math.floor(page)));
     limit = Math.min(100, Math.max(1, Math.abs(Math.floor(limit))));
 
-    const where: any = { status: 'PUBLISHED' };
+    const where: any = {};
+
+    // Если передан organizerId — показываем все статусы его событий
+    // Если нет — показываем только опубликованные
+    if (organizerId) {
+      where.organizerId = organizerId;
+    } else {
+      where.status = 'PUBLISHED';
+    }
+
     if (category) where.categoryId = category;
     if (search) {
       where.OR = [
@@ -108,8 +117,9 @@ export class EventsService {
     categoryId: string;
     organizerId: string;
     imageUrl?: string;
+    status?: string;
   }) {
-    return prisma.event.create({ data });
+    return prisma.event.create({ data: data as any });
   }
 
   async update(id: string, data: Partial<{

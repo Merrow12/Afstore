@@ -22,6 +22,7 @@ export class EventsController {
       Number(page) || 1,
       Number(limit) || 50,
       minRating ? Number(minRating) : undefined,
+      organizerId,
     );
   }
 
