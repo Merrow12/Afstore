@@ -14,4 +14,14 @@ export class AuthController {
   login(@Body() body: { email: string; password: string }) {
     return this.authService.login(body.email, body.password);
   }
+
+  @Post('password-reset')
+  requestPasswordReset(@Body() body: { email: string }) {
+    return this.authService.requestPasswordReset(body.email);
+  }
+
+  @Post('password-reset/confirm')
+  resetPassword(@Body() body: { email: string; newPassword: string }) {
+    return this.authService.resetPassword(body.email, body.newPassword);
+  }
 }

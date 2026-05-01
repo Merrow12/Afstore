@@ -7,6 +7,8 @@ export default function Navbar() {
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const canCreate = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
+
   const navItems = [
     { label: 'Афиша', path: '/events' },
     { label: 'Профиль', path: '/profile' },
@@ -27,6 +29,7 @@ export default function Navbar() {
         top: 0,
         zIndex: 100,
       }}>
+
         {/* Логотип */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/events')}>
           <div style={{ position: 'relative', width: 30, height: 40, flexShrink: 0 }}>
@@ -45,7 +48,7 @@ export default function Navbar() {
         </div>
 
         {/* Навигация — десктоп */}
-        <div className="nav-center" style={{
+        <div style={{
           display: 'flex', alignItems: 'center', gap: 2,
           background: '#f4f9fb', borderRadius: 12, padding: 4,
           border: '1px solid #e0f0f5',
@@ -68,8 +71,28 @@ export default function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {user ? (
             <>
+              {/* Кнопка создать событие для организаторов */}
+              {canCreate && (
+                <button onClick={() => navigate('/events/create')} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 16px', borderRadius: 10,
+                  background: '#e8f7fb', color: '#1a6b7c',
+                  fontSize: 13, border: '1.5px solid #b2dde8',
+                  fontFamily: "'Roboto', sans-serif", fontWeight: 500,
+                }}>
+                  <div style={{ width: 16, height: 16, borderRadius: 4, background: '#62b6cb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, lineHeight: 1 }}>+</div>
+                  Создать событие
+                </button>
+              )}
+
+              {/* Уведомления */}
               <div style={{ position: 'relative' }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: '#f4f9fb', border: '1px solid #e0f0f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 10,
+                  background: '#f4f9fb', border: '1px solid #e0f0f5',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer',
+                }}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4z" stroke="#7a9ea6" strokeWidth="1.4" fill="none"/>
                     <path d="M6.5 13a1.5 1.5 0 0 0 3 0" stroke="#7a9ea6" strokeWidth="1.4" fill="none"/>
@@ -77,13 +100,18 @@ export default function Navbar() {
                 </div>
                 <div style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: '50%', background: '#62b6cb', border: '2px solid #fff' }} />
               </div>
+
+              {/* Имя пользователя */}
               <button onClick={() => navigate('/profile')} style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '8px 18px', borderRadius: 10, background: 'none',
                 color: '#62b6cb', fontSize: 13, border: '1.5px solid #b2dde8',
                 fontFamily: "'Roboto', sans-serif", fontWeight: 500,
               }}>
-                {user.name}
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#62b6cb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>
+                  {user.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                </div>
+                {user.name.split(' ')[0]}
               </button>
             </>
           ) : (
@@ -121,11 +149,10 @@ export default function Navbar() {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Открыть меню"
             style={{
-              display: 'none',
               width: 38, height: 38, borderRadius: 10,
               background: '#f4f9fb', border: '1px solid #e0f0f5',
+              display: 'none',
               alignItems: 'center', justifyContent: 'center',
-              ['@media (max-width: 768px)' as any]: { display: 'flex' },
             }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -142,6 +169,7 @@ export default function Navbar() {
           background: '#fff', borderBottom: '1px solid #e0f0f5',
           padding: '16px 24px', zIndex: 99,
           display: 'flex', flexDirection: 'column', gap: 8,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
         }}>
           {navItems.map(item => (
             <button key={item.path}
@@ -151,11 +179,31 @@ export default function Navbar() {
                 color: location.pathname === item.path ? '#1a6b7c' : '#0f2a30',
                 border: 'none', fontFamily: "'Roboto', sans-serif", fontWeight: 500,
                 background: location.pathname === item.path ? '#e8f7fb' : '#f4f9fb',
-                textAlign: 'left',
+                textAlign: 'left', cursor: 'pointer',
               }}>
               {item.label}
             </button>
           ))}
+          {canCreate && (
+            <button
+              onClick={() => { navigate('/events/create'); setMenuOpen(false); }}
+              style={{ padding: '12px 16px', borderRadius: 10, fontSize: 15, color: '#1a6b7c', border: 'none', fontFamily: "'Roboto', sans-serif", fontWeight: 500, background: '#e8f7fb', textAlign: 'left', cursor: 'pointer' }}
+            >
+              + Создать событие
+            </button>
+          )}
+          {!user && (
+            <>
+              <button onClick={() => { navigate('/login'); setMenuOpen(false); }}
+                style={{ padding: '12px 16px', borderRadius: 10, fontSize: 15, color: '#62b6cb', border: '1.5px solid #b2dde8', fontFamily: "'Roboto', sans-serif", fontWeight: 500, background: '#fff', cursor: 'pointer' }}>
+                Войти
+              </button>
+              <button onClick={() => { navigate('/register'); setMenuOpen(false); }}
+                style={{ padding: '12px 16px', borderRadius: 10, fontSize: 15, color: '#fff', border: 'none', fontFamily: "'Roboto', sans-serif", fontWeight: 500, background: '#62b6cb', cursor: 'pointer' }}>
+                Регистрация
+              </button>
+            </>
+          )}
         </div>
       )}
     </>

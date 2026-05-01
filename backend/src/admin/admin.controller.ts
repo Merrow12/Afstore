@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, Query, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Body, Query, Headers, UnauthorizedException } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtService } from '@nestjs/jwt';
 
@@ -56,4 +56,19 @@ export class AdminController {
     this.checkAdmin(auth);
     return this.adminService.moderateEvent(id, body.action);
   }
+
+  @Get('events')
+  getAllEvents(@Headers('authorization') auth: string) {
+    this.checkAdmin(auth);
+    return this.adminService.getAllEvents();
+  }
+
+  @Delete('events/:id')
+  deleteEvent(
+    @Headers('authorization') auth: string,
+    @Param('id') id: string,
+  ) {
+    this.checkAdmin(auth);
+    return this.adminService.deleteEvent(id);
+  }	
 }

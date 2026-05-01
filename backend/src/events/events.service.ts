@@ -15,6 +15,7 @@ export class EventsService {
     page = 1,
     limit = 50,
     minRating?: number,
+    organizerId?: string,
   ) {
     page = Math.max(1, Math.abs(Math.floor(page)));
     limit = Math.min(100, Math.max(1, Math.abs(Math.floor(limit))));

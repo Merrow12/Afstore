@@ -64,4 +64,27 @@ export class AdminService {
       select: { id: true, title: true, status: true },
     });
   }
+  async deleteEvent(id: string) {
+    // Сначала удаляем связанные данные
+    await prisma.registration.deleteMany({ where: { eventId: id } });
+    await prisma.review.deleteMany({ where: { eventId: id } });
+    await prisma.event.delete({ where: { id } });
+    return { message: 'Мероприятие удалено' };
+  }
+
+  async getAllEvents() {
+    return prisma.event.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        createdAt: true,
+        dateTime: true,
+        category: { select: { name: true } },
+        organizer: { select: { name: true } },
+        registrations: { select: { id: true } },
+      },
+    });
+  }
 }

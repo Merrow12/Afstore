@@ -37,21 +37,30 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    api.get(`/events?organizerId=${user.id}`)
-      .then(res => setEvents(res.data.events))
-      .catch(console.error);
+
+    if (user.role === 'ORGANIZER' || user.role === 'ADMIN') {
+      api.get(`/events?organizerId=${user.id}`)
+        .then(res => setEvents(res.data.events))
+        .catch(console.error);
+    } else {
+      api.get(`/registrations/user/${user.id}`)
+        .then(res => setEvents(res.data.map((r: any) => r.event)))
+        .catch(console.error);
+    }
   }, [user]);
 
   if (!user) return <p style={{ textAlign: 'center', padding: 40 }}>Загрузка...</p>;
 
   const role = roleLabels[user.role] || roleLabels.STUDENT;
   const initials = user.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  const isOrganizer = user.role === 'ORGANIZER' || user.role === 'ADMIN';
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: 24 }}>
 
       {/* Карточка профиля */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e0f0f5', overflow: 'hidden', marginBottom: 24 }}>
+
         {/* Шапка */}
         <div style={{ background: 'linear-gradient(135deg, #e8f7fb 0%, #f4f9fb 100%)', padding: '32px 28px 24px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: '#62b6cb', opacity: 0.07 }} />
@@ -78,48 +87,72 @@ export default function ProfilePage() {
         {/* Детали */}
         <div style={{ padding: '20px 28px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-            {[
-              { label: 'Email', value: user.email, icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8" rx="2" stroke="#b0c8ce" strokeWidth="1.2" fill="none"/><path d="M1 5l6 4 6-4" stroke="#b0c8ce" strokeWidth="1.2"/></svg> },
-              { label: 'Факультет', value: user.faculty || 'Не указан', icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="4" width="10" height="8" rx="2" stroke="#b0c8ce" strokeWidth="1.2" fill="none"/><path d="M5 4V3a2 2 0 0 1 4 0v1" stroke="#b0c8ce" strokeWidth="1.2"/></svg> },
-            ].map(item => (
-              <div key={item.label} style={{ background: '#f4f9fb', borderRadius: 10, padding: '12px 16px', border: '1px solid #e0f0f5' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  {item.icon}
-                  <span style={{ fontSize: 11, color: '#a0b8be', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>{item.label}</span>
-                </div>
-                <div style={{ fontSize: 14, color: '#0f2a30', fontWeight: 500 }}>{item.value}</div>
+            <div style={{ background: '#f4f9fb', borderRadius: 10, padding: '12px 16px', border: '1px solid #e0f0f5' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="8" rx="2" stroke="#b0c8ce" strokeWidth="1.2" fill="none"/><path d="M1 5l6 4 6-4" stroke="#b0c8ce" strokeWidth="1.2"/></svg>
+                <span style={{ fontSize: 11, color: '#a0b8be', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>Email</span>
               </div>
-            ))}
+              <div style={{ fontSize: 14, color: '#0f2a30', fontWeight: 500 }}>{user.email}</div>
+            </div>
+            <div style={{ background: '#f4f9fb', borderRadius: 10, padding: '12px 16px', border: '1px solid #e0f0f5' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="4" width="10" height="8" rx="2" stroke="#b0c8ce" strokeWidth="1.2" fill="none"/><path d="M5 4V3a2 2 0 0 1 4 0v1" stroke="#b0c8ce" strokeWidth="1.2"/></svg>
+                <span style={{ fontSize: 11, color: '#a0b8be', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5 }}>Факультет</span>
+              </div>
+              <div style={{ fontSize: 14, color: '#0f2a30', fontWeight: 500 }}>{user.faculty || 'Не указан'}</div>
+            </div>
           </div>
 
-          <button
-            onClick={() => { localStorage.clear(); navigate('/login'); }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', borderRadius: 10, background: '#fff0f0', color: '#c0392b', fontSize: 13, border: '1.5px solid #fcc', fontFamily: "'Roboto', sans-serif", fontWeight: 500 }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 7h7M9 4l3 3-3 3" stroke="#c0392b" strokeWidth="1.4" strokeLinecap="round"/><path d="M5 2H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2" stroke="#c0392b" strokeWidth="1.4" strokeLinecap="round"/></svg>
-            Выйти из аккаунта
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {isOrganizer && (
+              <button
+                onClick={() => navigate('/events/create')}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', borderRadius: 10, background: '#62b6cb', color: '#fff', fontSize: 13, border: 'none', fontFamily: "'Roboto', sans-serif", fontWeight: 500 }}
+              >
+                <div style={{ width: 16, height: 16, borderRadius: 4, background: 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>+</div>
+                Создать мероприятие
+              </button>
+            )}
+            <button
+              onClick={() => { localStorage.clear(); navigate('/login'); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', borderRadius: 10, background: '#fff0f0', color: '#c0392b', fontSize: 13, border: '1.5px solid #fcc', fontFamily: "'Roboto', sans-serif", fontWeight: 500 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 7h7M9 4l3 3-3 3" stroke="#c0392b" strokeWidth="1.4" strokeLinecap="round"/><path d="M5 2H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2" stroke="#c0392b" strokeWidth="1.4" strokeLinecap="round"/></svg>
+              Выйти
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Мои мероприятия */}
+      {/* Мероприятия */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e0f0f5', padding: '20px 24px' }}>
         <div style={{ fontFamily: "'Roboto Slab', serif", fontSize: 16, fontWeight: 600, color: '#0f2a30', marginBottom: 16 }}>
-          Мои мероприятия
+          {isOrganizer ? 'Мои мероприятия' : 'Мои записи'}
         </div>
 
         {events.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 0', color: '#a0b8be' }}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ marginBottom: 12, display: 'block', margin: '0 auto 12px' }}>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ display: 'block', margin: '0 auto 12px' }}>
               <rect x="6" y="10" width="28" height="24" rx="5" fill="#e8f7fb"/>
               <rect x="6" y="10" width="28" height="8" rx="5" fill="#b2dde8"/>
               <circle cx="20" cy="26" r="4" fill="#b2dde8"/>
             </svg>
-            <p style={{ fontSize: 14 }}>Нет мероприятий</p>
+            <p style={{ fontSize: 14, marginBottom: 8 }}>
+              {isOrganizer ? 'Нет мероприятий' : 'Вы ещё не записались ни на одно мероприятие'}
+            </p>
+            {!isOrganizer && (
+              <button
+                onClick={() => navigate('/events')}
+                style={{ padding: '8px 20px', borderRadius: 10, background: '#62b6cb', color: '#fff', border: 'none', fontSize: 13, fontFamily: "'Roboto', sans-serif", fontWeight: 500, cursor: 'pointer' }}
+              >
+                Перейти к афише
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {events.map(event => {
+              if (!event) return null;
               const date = new Date(event.dateTime);
               return (
                 <div
@@ -135,9 +168,11 @@ export default function ProfilePage() {
                     <div style={{ fontFamily: "'Roboto Slab', serif", fontSize: 14, fontWeight: 600, color: '#0f2a30', marginBottom: 4 }}>{event.title}</div>
                     <div style={{ fontSize: 12, color: '#7a9ea6' }}>📍 {event.location}</div>
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8, background: '#e8f7fb', color: '#1a6b7c' }}>
-                    {event.category.name}
-                  </span>
+                  {event.category && (
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8, background: '#e8f7fb', color: '#1a6b7c', flexShrink: 0 }}>
+                      {event.category.name}
+                    </span>
+                  )}
                 </div>
               );
             })}

@@ -19,7 +19,10 @@ export class AuthService {
     });
 
     const token = this.jwtService.sign({ userId: user.id, role: user.role });
-    return { accessToken: token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
+    return {
+      accessToken: token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, faculty: user.faculty },
+    };
   }
 
   async login(email: string, password: string) {
@@ -30,6 +33,44 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('Неверный email или пароль');
 
     const token = this.jwtService.sign({ userId: user.id, role: user.role });
-    return { accessToken: token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
+    return {
+      accessToken: token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, faculty: user.faculty },
+    };
+  }
+
+  async requestPasswordReset(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Не раскрываем существует ли email
+      return { message: 'Если email зарегистрирован — письмо отправлено' };
+    }
+
+    // Генерируем временный токен
+    const resetToken = Math.random().toString(36).substring(2, 15);
+
+    // Сохраняем уведомление пользователю
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: 'PASSWORD_RESET',
+        message: `Запрос на сброс пароля. Токен: ${resetToken}`,
+      },
+    });
+
+    return { message: 'Если email зарегистрирован — письмо отправлено' };
+  }
+
+  async resetPassword(email: string, newPassword: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new UnauthorizedException('Пользователь не найден');
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { email },
+      data: { passwordHash },
+    });
+
+    return { message: 'Пароль успешно изменён' };
   }
 }

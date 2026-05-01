@@ -15,6 +15,7 @@ export class EventsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('minRating') minRating?: string,
+    @Query('organizerId') organizerId?: string,
   ) {
     return this.eventsService.findAll(
       category, faculty, search, dateFrom, dateTo,

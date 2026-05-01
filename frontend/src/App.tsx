@@ -7,6 +7,7 @@ import EventList from './components/events/EventList';
 import EventDetail from './components/events/EventDetail';
 import ProfilePage from './components/ProfilePage';
 import AdminDashboard from './components/admin/AdminDashboard';
+import CreateEventForm from './components/events/CreateEventForm';
 
 function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ function App() {
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/password-reset" element={<PasswordReset />} />
         <Route path="/events" element={<EventList />} />
+        <Route path="/events/create" element={<CreateEventForm />} />
         <Route path="/events/:id" element={<EventDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/admin" element={<AdminDashboard />} />

@@ -6,7 +6,13 @@ interface Stats {
   totalUsers: number;
   totalEvents: number;
   totalRegistrations: number;
-  recentEvents: { id: string; title: string; status: string; createdAt: string; category: { name: string } }[];
+  recentEvents: {
+    id: string;
+    title: string;
+    status: string;
+    createdAt: string;
+    category: { name: string };
+  }[];
 }
 
 const statusStyle: Record<string, { bg: string; color: string; label: string }> = {
@@ -18,12 +24,21 @@ const statusStyle: Record<string, { bg: string; color: string; label: string }> 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    Promise.all([api.get('/admin/stats'), api.get('/admin/users')])
-      .then(([s, u]) => { setStats(s.data); setUsers(u.data.users); })
+    Promise.all([
+      api.get('/admin/stats'),
+      api.get('/admin/users'),
+      api.get('/admin/events'),
+    ])
+      .then(([s, u, e]) => {
+        setStats(s.data);
+        setUsers(u.data.users);
+        setAllEvents(e.data);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -42,6 +57,14 @@ export default function AdminDashboard() {
     } catch { alert('Ошибка модерации'); }
   };
 
+  const handleDelete = async (eventId: string, title: string) => {
+    if (!window.confirm(`Удалить "${title}"? Это действие необратимо.`)) return;
+    try {
+      await api.delete(`/admin/events/${eventId}`);
+      setAllEvents(prev => prev.filter(e => e.id !== eventId));
+    } catch { alert('Ошибка удаления'); }
+  };
+
   if (loading) return <p style={{ textAlign: 'center', padding: 40, color: '#7a9ea6' }}>Загрузка...</p>;
 
   return (
@@ -58,7 +81,7 @@ export default function AdminDashboard() {
             Администрирование
           </h1>
         </div>
-        <button onClick={() => navigate('/events')} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, background: '#fff', border: '1.5px solid #e0f0f5', color: '#7a9ea6', fontSize: 13, fontFamily: "'Roboto', sans-serif", fontWeight: 500 }}>
+        <button onClick={() => navigate('/events')} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, background: '#fff', border: '1.5px solid #e0f0f5', color: '#7a9ea6', fontSize: 13, fontFamily: "'Roboto', sans-serif", fontWeight: 500, cursor: 'pointer' }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#7a9ea6" strokeWidth="1.4" strokeLinecap="round"/></svg>
           На афишу
         </button>
@@ -67,9 +90,18 @@ export default function AdminDashboard() {
       {/* Статистика */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }}>
         {[
-          { label: 'Пользователей', value: stats?.totalUsers, icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="8" cy="7" r="3" stroke="#62b6cb" strokeWidth="1.5" fill="none"/><path d="M2 17c0-4 2.7-6 6-6s6 2 6 6" stroke="#62b6cb" strokeWidth="1.5" strokeLinecap="round" fill="none"/><circle cx="15" cy="8" r="2.5" stroke="#62b6cb" strokeWidth="1.3" fill="none"/><path d="M18 16c0-2.5-1.5-4-3-4" stroke="#62b6cb" strokeWidth="1.3" strokeLinecap="round"/></svg>, bg: '#e8f7fb', border: '#b2dde8' },
-          { label: 'Мероприятий',   value: stats?.totalEvents, icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="12" rx="3" stroke="#4caf50" strokeWidth="1.5" fill="none"/><rect x="3" y="5" width="14" height="5" rx="3" fill="#e8f5e9"/><circle cx="7" cy="15" r="1" fill="#4caf50"/><circle cx="10" cy="15" r="1" fill="#4caf50"/><circle cx="13" cy="15" r="1" fill="#4caf50"/></svg>, bg: '#e8f5e9', border: '#c8e6c9' },
-          { label: 'Регистраций',   value: stats?.totalRegistrations, icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>, bg: '#ede7f6', border: '#d1c4e9' },
+          {
+            label: 'Пользователей', value: stats?.totalUsers, bg: '#e8f7fb', border: '#b2dde8',
+            icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="8" cy="7" r="3" stroke="#62b6cb" strokeWidth="1.5" fill="none"/><path d="M2 17c0-4 2.7-6 6-6s6 2 6 6" stroke="#62b6cb" strokeWidth="1.5" strokeLinecap="round" fill="none"/><circle cx="15" cy="8" r="2.5" stroke="#62b6cb" strokeWidth="1.3" fill="none"/><path d="M18 16c0-2.5-1.5-4-3-4" stroke="#62b6cb" strokeWidth="1.3" strokeLinecap="round"/></svg>
+          },
+          {
+            label: 'Мероприятий', value: stats?.totalEvents, bg: '#e8f5e9', border: '#c8e6c9',
+            icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="12" rx="3" stroke="#4caf50" strokeWidth="1.5" fill="none"/><rect x="3" y="5" width="14" height="5" rx="3" fill="#e8f5e9"/><circle cx="7" cy="15" r="1" fill="#4caf50"/><circle cx="10" cy="15" r="1" fill="#4caf50"/><circle cx="13" cy="15" r="1" fill="#4caf50"/></svg>
+          },
+          {
+            label: 'Регистраций', value: stats?.totalRegistrations, bg: '#ede7f6', border: '#d1c4e9',
+            icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          },
         ].map(card => (
           <div key={card.label} style={{ background: '#fff', borderRadius: 14, border: `1px solid ${card.border}`, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ width: 48, height: 48, borderRadius: 12, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -83,7 +115,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Последние мероприятия */}
+      {/* Последние мероприятия — модерация */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e0f0f5', padding: '20px 24px', marginBottom: 24 }}>
         <div style={{ fontFamily: "'Roboto Slab', serif", fontSize: 16, fontWeight: 600, color: '#0f2a30', marginBottom: 16 }}>
           Последние мероприятия
@@ -93,24 +125,89 @@ export default function AdminDashboard() {
             const s = statusStyle[event.status] || statusStyle.DRAFT;
             return (
               <div key={event.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 12, border: '1px solid #e8f4f8', background: '#fafcfd' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ background: '#e8f7fb', color: '#1a6b7c', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8 }}>{event.category.name}</span>
-                  <span style={{ fontFamily: "'Roboto Slab', serif", fontSize: 14, fontWeight: 600, color: '#0f2a30' }}>{event.title}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+                  <span style={{ background: '#e8f7fb', color: '#1a6b7c', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8, flexShrink: 0 }}>
+                    {event.category.name}
+                  </span>
+                  <span
+                    onClick={() => navigate(`/events/${event.id}`)}
+                    style={{ fontFamily: "'Roboto Slab', serif", fontSize: 14, fontWeight: 600, color: '#1a6b7c', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#b2dde8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {event.title}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ background: s.bg, color: s.color, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8 }}>{s.label}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 12 }}>
+                  <span style={{ background: s.bg, color: s.color, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8 }}>
+                    {s.label}
+                  </span>
+                  <button
+                    onClick={() => navigate(`/events/${event.id}`)}
+                    style={{ padding: '5px 12px', borderRadius: 8, background: '#f4f9fb', color: '#7a9ea6', fontSize: 12, fontWeight: 600, border: '1px solid #e0f0f5', cursor: 'pointer' }}
+                  >
+                    👁 Просмотр
+                  </button>
                   {event.status === 'DRAFT' && (
                     <>
-                      <button onClick={() => handleModerate(event.id, 'APPROVE')}
-                        style={{ padding: '5px 12px', borderRadius: 8, background: '#e8f5e9', color: '#2e7d32', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+                      <button
+                        onClick={() => handleModerate(event.id, 'APPROVE')}
+                        style={{ padding: '5px 12px', borderRadius: 8, background: '#e8f5e9', color: '#2e7d32', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                      >
                         ✓ Одобрить
                       </button>
-                      <button onClick={() => handleModerate(event.id, 'REJECT')}
-                        style={{ padding: '5px 12px', borderRadius: 8, background: '#fce4ec', color: '#c62828', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+                      <button
+                        onClick={() => handleModerate(event.id, 'REJECT')}
+                        style={{ padding: '5px 12px', borderRadius: 8, background: '#fce4ec', color: '#c62828', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                      >
                         ✗ Отклонить
                       </button>
                     </>
                   )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Все мероприятия с удалением */}
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e0f0f5', padding: '20px 24px', marginBottom: 24 }}>
+        <div style={{ fontFamily: "'Roboto Slab', serif", fontSize: 16, fontWeight: 600, color: '#0f2a30', marginBottom: 16 }}>
+          Все мероприятия ({allEvents.length})
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {allEvents.map(event => {
+            const s = statusStyle[event.status] || statusStyle.DRAFT;
+            return (
+              <div key={event.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 12, border: '1px solid #e8f4f8', background: '#fafcfd' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+                  <span style={{ background: '#e8f7fb', color: '#1a6b7c', fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8, flexShrink: 0 }}>
+                    {event.category.name}
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Roboto Slab', serif", fontSize: 13, fontWeight: 600, color: '#0f2a30', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {event.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#a0b8be', marginTop: 2 }}>
+                      {event.organizer.name} · {new Date(event.dateTime).toLocaleDateString('ru-RU')} · {event.registrations.length} записей
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 12 }}>
+                  <span style={{ background: s.bg, color: s.color, fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 8 }}>
+                    {s.label}
+                  </span>
+                  <button
+                    onClick={() => navigate(`/events/${event.id}`)}
+                    style={{ padding: '5px 12px', borderRadius: 8, background: '#f4f9fb', color: '#7a9ea6', fontSize: 12, fontWeight: 600, border: '1px solid #e0f0f5', cursor: 'pointer' }}
+                  >
+                    👁 Просмотр
+                  </button>
+                  <button
+                    onClick={() => handleDelete(event.id, event.title)}
+                    style={{ padding: '5px 12px', borderRadius: 8, background: '#fce4ec', color: '#c62828', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                  >
+                    🗑 Удалить
+                  </button>
                 </div>
               </div>
             );
@@ -131,15 +228,15 @@ export default function AdminDashboard() {
                 <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#e8f7fb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#62b6cb', border: '1.5px solid #b2dde8', flexShrink: 0 }}>
                   {initials}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: "'Roboto Slab', serif", fontSize: 14, fontWeight: 600, color: '#0f2a30' }}>{user.name}</div>
-                  <div style={{ fontSize: 12, color: '#a0b8be' }}>{user.email}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: "'Roboto Slab', serif", fontSize: 14, fontWeight: 600, color: '#0f2a30', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
+                  <div style={{ fontSize: 12, color: '#a0b8be', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
                 </div>
-                <div style={{ fontSize: 12, color: '#7a9ea6', marginRight: 16 }}>{user.faculty || '—'}</div>
+                <div style={{ fontSize: 12, color: '#7a9ea6', marginRight: 8, flexShrink: 0 }}>{user.faculty || '—'}</div>
                 <select
                   value={user.role}
                   onChange={e => handleRoleChange(user.id, e.target.value)}
-                  style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #e0f0f5', fontSize: 13, fontFamily: "'Roboto', sans-serif", color: '#0f2a30', background: '#f4f9fb', outline: 'none' }}
+                  style={{ padding: '6px 12px', borderRadius: 8, border: '1.5px solid #e0f0f5', fontSize: 13, fontFamily: "'Roboto', sans-serif", color: '#0f2a30', background: '#f4f9fb', outline: 'none', cursor: 'pointer' }}
                 >
                   <option value="STUDENT">Студент</option>
                   <option value="ORGANIZER">Организатор</option>
