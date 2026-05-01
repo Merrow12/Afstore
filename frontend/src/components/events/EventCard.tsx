@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface Event {
   id: string;
   title: string;
@@ -19,7 +21,7 @@ const categoryColors: Record<string, { bg: string; tag: string; text: string; bt
   science:   { bg: '#ede7f6', tag: '#d1c4e9', text: '#4527a0', btn: '#ede7f6', btnText: '#4527a0' },
 };
 
-const categoryIcons: Record<string, JSX.Element> = {
+const categoryIcons: Record<string, React.ReactElement> = {
   lecture: (
     <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
       <rect x="10" y="16" width="36" height="28" rx="6" fill="#b2e0ec"/>
