@@ -26,3 +26,92 @@ body {
 
 a { text-decoration: none; color: inherit; }
 button { cursor: pointer; }
+
+/* Доступность WCAG 2.1 AA */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #62b6cb;
+  outline-offset: 2px;
+}
+
+/* Скрытый текст для скринридеров */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Адаптивный дизайн */
+@media (max-width: 768px) {
+  /* Навбар */
+  .nav-center {
+    display: none !important;
+  }
+
+  /* Карточки в одну колонку */
+  .events-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hero секция */
+  .hero-section {
+    padding: 24px 16px !important;
+  }
+
+  .hero-title {
+    font-size: 24px !important;
+  }
+
+  /* Фильтры */
+  .filters-wrap {
+    flex-direction: column !important;
+  }
+
+  /* Профиль */
+  .profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Статистика */
+  .stats-wrap {
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 20px !important;
+  }
+
+  .search-wrap {
+    flex-direction: column !important;
+  }
+
+  .pagination-wrap {
+    gap: 4px !important;
+  }
+}
+
+/* Высокий контраст для WCAG */
+@media (prefers-contrast: high) {
+  :root {
+    --primary: #0a5a6e;
+    --primary-dark: #003d4d;
+    --text-muted: #2a4a50;
+  }
+}
+
+/* Уменьшение анимаций */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

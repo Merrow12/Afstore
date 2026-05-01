@@ -6,19 +6,26 @@ const prisma = new PrismaClient();
 @Injectable()
 export class EventsService {
 
-  async findAll(category?: string, faculty?: string, search?: string, dateFrom?: string, dateTo?: string, page = 1, limit = 50) {
-    // Валидация параметров
+  async findAll(
+    category?: string,
+    faculty?: string,
+    search?: string,
+    dateFrom?: string,
+    dateTo?: string,
+    page = 1,
+    limit = 50,
+    minRating?: number,
+  ) {
     page = Math.max(1, Math.abs(Math.floor(page)));
     limit = Math.min(100, Math.max(1, Math.abs(Math.floor(limit))));
 
     const where: any = { status: 'PUBLISHED' };
-
     if (category) where.categoryId = category;
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-    ];
+      ];
     }
     if (dateFrom || dateTo) {
       where.dateTime = {};
@@ -41,18 +48,31 @@ export class EventsService {
           status: true,
           category: { select: { name: true, slug: true } },
           organizer: { select: { name: true } },
+          reviews: { select: { rating: true } },
+          registrations: { select: { id: true } },
         },
       }),
       prisma.event.count({ where }),
     ]);
 
-    return {
-      events,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    let result = events.map(event => {
+      const avgRating = event.reviews.length > 0
+        ? Math.round((event.reviews.reduce((a, b) => a + b.rating, 0) / event.reviews.length) * 10) / 10
+        : null;
+      const { reviews, registrations, ...rest } = event;
+      return {
+        ...rest,
+        avgRating,
+        reviewCount: reviews.length,
+        registrationCount: registrations.length,
+      };
+    });
+
+    if (minRating) {
+      result = result.filter(e => e.avgRating !== null && e.avgRating >= minRating);
+    }
+
+    return { events: result, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string) {
@@ -62,10 +82,21 @@ export class EventsService {
         category: true,
         organizer: { select: { id: true, name: true, email: true } },
         reviews: { include: { user: { select: { name: true } } } },
+        registrations: { select: { id: true } },
       },
     });
     if (!event) throw new NotFoundException('Мероприятие не найдено');
-    return event;
+
+    const avgRating = event.reviews.length > 0
+      ? Math.round((event.reviews.reduce((a, b) => a + b.rating, 0) / event.reviews.length) * 10) / 10
+      : null;
+
+    return {
+      ...event,
+      avgRating,
+      reviewCount: event.reviews.length,
+      registrationCount: event.registrations.length,
+    };
   }
 
   async create(data: {
@@ -80,16 +111,16 @@ export class EventsService {
     return prisma.event.create({ data });
   }
 
-async update(id: string, data: Partial<{
-  title: string;
-  description: string;
-  dateTime: Date;
-  location: string;
-  imageUrl: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
-}>) {
-  return prisma.event.update({ where: { id }, data });
-}
+  async update(id: string, data: Partial<{
+    title: string;
+    description: string;
+    dateTime: Date;
+    location: string;
+    imageUrl: string;
+    status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+  }>) {
+    return prisma.event.update({ where: { id }, data });
+  }
 
   async remove(id: string) {
     return prisma.event.delete({ where: { id } });

@@ -14,15 +14,13 @@ export class EventsController {
     @Query('dateTo') dateTo?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('minRating') minRating?: string,
   ) {
     return this.eventsService.findAll(
-      category,
-      faculty,
-      search,
-      dateFrom,
-      dateTo,
+      category, faculty, search, dateFrom, dateTo,
       Number(page) || 1,
       Number(limit) || 50,
+      minRating ? Number(minRating) : undefined,
     );
   }
 
@@ -32,15 +30,7 @@ export class EventsController {
   }
 
   @Post()
-  create(@Body() body: {
-    title: string;
-    description: string;
-    dateTime: Date;
-    location: string;
-    categoryId: string;
-    organizerId: string;
-    imageUrl?: string;
-  }) {
+  create(@Body() body: any) {
     return this.eventsService.create(body);
   }
 
